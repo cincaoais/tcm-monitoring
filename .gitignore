@@ -1,0 +1,10 @@
+# Personal health data — never push
+tcm.db
+data/
+export.zip
+export/
+
+# Python
+.venv/
+__pycache__/
+*.pyc

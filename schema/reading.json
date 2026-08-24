@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tcm-monitor.local/schema/reading.json",
+  "title": "TCM Wellness Reading",
+  "description": "The reading JSON the model emits for a single 把脉 visit. Validated at runtime by tcm/validator.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reading_title",
+    "tcm_pattern_summary",
+    "plain_summary",
+    "basis",
+    "confidence_note",
+    "advice",
+    "followup",
+    "flags",
+    "disclaimer"
+  ],
+  "properties": {
+    "reading_title": {
+      "type": "string",
+      "maxLength": 24
+    },
+    "tcm_pattern_summary": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "Hedged tendency language, not a diagnosis."
+    },
+    "plain_summary": {
+      "type": "string",
+      "description": "One paragraph, no TCM vocabulary."
+    },
+    "basis": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Each item restates one fact from the digest."
+    },
+    "confidence_note": {
+      "type": "string"
+    },
+    "advice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["diet", "routine", "rest", "exercise"],
+      "properties": {
+        "diet": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "routine": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "rest": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "exercise": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "followup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["what_to_watch", "recheck_in_days"],
+      "properties": {
+        "what_to_watch": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "recheck_in_days": {
+          "type": "integer"
+        }
+      }
+    },
+    "flags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "disclaimer": {
+      "type": "string",
+      "description": "Fixed verbatim string, must equal db.DISCLAIMER."
+    }
+  }
+}

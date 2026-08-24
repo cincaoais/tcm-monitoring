@@ -1,0 +1,4 @@
+- [TCM pulse project](tcm-pulse-project.md) — Apple Watch as a 把脉 doctor; the concept and every decision locked in brainstorming
+- [TCM pulse Phase 4 built](tcm-pulse-phase4-built.md) — v1 CLI built + tested (95/95), real backfill ingested (27/14 baseline days), pipeline verified offline; only data collection left (`tcm log` to 14 days for converge + Spike 3 cadence call)
+- [Staged session SOP](staged-session-sop.md) — one phase per session; the deliverable is often a handoff prompt, not the work
+- [TCM pulse resources](tcm-pulse-resources.md) — five TCM LLM repos plus the Apple Health MCP server shortcut
