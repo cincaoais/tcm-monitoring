@@ -162,13 +162,18 @@ def _archive_source(path):
     the archive path or None. Skips work if an archive for this export already exists (keyed by the
     export date), so re-ingesting the same export doesn't re-zip 175 MB."""
     os.makedirs(RAW_DIR, exist_ok=True)
+    stamp = (ingest.read_export_date(path) or "").replace(":", "").replace(" ", "_").replace("+", "")
     if str(path).lower().endswith(".zip"):
-        dest = os.path.join(RAW_DIR, os.path.basename(path))
+        # Key by EXPORT DATE, never by basename. Apple always names the download export.zip, so
+        # keying by filename made every export after the first collide with data/raw/export.zip;
+        # the exists-check then skipped the copy and ingest silently re-read the OLD archive.
+        if not stamp:
+            return None          # unidentifiable — ingest the source directly rather than guess
+        dest = os.path.join(RAW_DIR, f"export-{stamp}.zip")
         if os.path.abspath(path) != os.path.abspath(dest) and not os.path.exists(dest):
             shutil.copy2(path, dest)
         return dest
-    stamp = (ingest.read_export_date(path) or "unknown").replace(":", "").replace(" ", "_").replace("+", "")
-    dest = os.path.join(RAW_DIR, f"export-{stamp}.zip")
+    dest = os.path.join(RAW_DIR, f"export-{stamp or 'unknown'}.zip")
     if os.path.exists(dest):
         return dest
     xml = path

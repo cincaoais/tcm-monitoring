@@ -3,6 +3,7 @@ import io
 import os
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -110,6 +111,44 @@ def test_ingest_path_idempotent_via_directory():
         count2 = conn.execute("SELECT COUNT(*) FROM metrics").fetchone()[0]
         assert count2 == count1 == 2                       # idempotent, no duplicate rows
         assert summary2["rows"] == 2
+
+
+def _zip_with_export_date(path, export_date, value="70"):
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<HealthData locale="en_US">
+<ExportDate value="{export_date}"/>
+<Record type="HKQuantityTypeIdentifierRestingHeartRate" sourceName="Watch"
+ unit="count/min" startDate="2026-01-29 20:17:55 +0800" endDate="2026-01-29 23:16:38 +0800" value="{value}"/>
+</HealthData>""".encode()
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("apple_health_export/export.xml", xml)
+
+
+def test_archive_source_keys_zip_by_export_date_not_filename():
+    """Apple always names the download export.zip. Keying the archive by basename made every
+    later export collide with the first, so ingest silently re-read the OLD export."""
+    from tcm import cli
+    with tempfile.TemporaryDirectory() as tmp:
+        raw = Path(tmp) / "raw"
+        raw.mkdir()
+        old_src = Path(tmp) / "a" / "export.zip"
+        new_src = Path(tmp) / "b" / "export.zip"
+        old_src.parent.mkdir()
+        new_src.parent.mkdir()
+        _zip_with_export_date(old_src, "2026-08-10 00:44:11 +0800")
+        _zip_with_export_date(new_src, "2026-08-30 22:49:52 +0800", value="61")
+
+        orig = cli.RAW_DIR
+        cli.RAW_DIR = str(raw)
+        try:
+            a1 = cli._archive_source(str(old_src))
+            a2 = cli._archive_source(str(new_src))
+        finally:
+            cli.RAW_DIR = orig
+
+        assert a1 != a2, f"two different exports shared one archive path: {a1}"
+        got = ingest.read_export_date(a2)
+        assert got.startswith("2026-08-30"), f"new export archived as {got!r} (stale archive returned)"
 
 
 if __name__ == "__main__":
